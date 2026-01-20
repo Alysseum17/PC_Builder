@@ -17,3 +17,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         ddl-auto: update
+jwt:
+  secret: your_jwt_secret_key
+  expiration: 86400000
+  refresh-expiration: 604800000
