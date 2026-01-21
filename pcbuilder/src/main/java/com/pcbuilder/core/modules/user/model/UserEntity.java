@@ -1,16 +1,20 @@
-package com.pcbuilder.core.modules.user;
+package com.pcbuilder.core.modules.user.model;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 
 @Entity
 @Data
 @Table(name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +30,10 @@ public class UserEntity {
     @Column(nullable = false, updatable = false)
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
+    @Enumerated(EnumType.STRING)
+    private HashSet<UserRole> roles;
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     @PrePersist
     protected void onCreate() {

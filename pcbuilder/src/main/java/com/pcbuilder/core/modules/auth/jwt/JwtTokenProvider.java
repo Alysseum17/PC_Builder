@@ -24,7 +24,7 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh-expiration}")
     private long jwtRefreshExpirationMs;
 
-    public SecretKey getSigningKey() {
+    private SecretKey getSigningKey() {
         byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
@@ -80,7 +80,7 @@ public class JwtTokenProvider {
         return expiration.before(new Date());
     }
 
-    public boolean verifyToken (String token) {
+    public boolean validateToken (String token) {
         try {
             Jwts.parser()
                     .verifyWith(getSigningKey())
