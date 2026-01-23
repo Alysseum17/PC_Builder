@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ForgotPasswordDto {
+public class MailDto {
     @NotBlank(message = "Email cannot be blank")
     @NotNull(message = "Email cannot be null")
     @Size(max = 50, message = "Email must be less than 50 characters")

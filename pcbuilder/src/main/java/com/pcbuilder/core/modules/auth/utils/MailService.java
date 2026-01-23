@@ -26,4 +26,13 @@ public class MailService {
                         "\nThis link will expire in 24 hours.");
         mailSender.send(message);
     }
+
+    public void sendEmailVerificationEmail(String to, String verificationLink) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Email Verification");
+        message.setText("To verify your email address, click the following link: " + verificationLink +
+                        "\nThis link will expire in 60 minutes.");
+        mailSender.send(message);
+    }
 }

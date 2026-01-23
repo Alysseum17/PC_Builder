@@ -7,6 +7,7 @@ import com.pcbuilder.core.modules.auth.dto.RegisterRequestDto;
 import com.pcbuilder.core.modules.auth.service.AuthService;
 import com.pcbuilder.core.modules.auth.utils.MailService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,12 +25,12 @@ public class AuthController {
     private final AuthService authService;
     private final MailService mailService;
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequestDto registerDto) throws Exception {
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequestDto registerDto) throws Exception {
         MessageResponseDto message = authService.registerUser(registerDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(message.getMessage());
     }
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequestDto loginDto, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequestDto loginDto, HttpServletResponse response) throws Exception {
         JwtResponseDto jwtResponseDto = authService.login(loginDto);
 
         ResponseCookie authCookie = ResponseCookie.from("authToken", jwtResponseDto.getAuthToken())

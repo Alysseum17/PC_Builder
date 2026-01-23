@@ -5,10 +5,10 @@ import com.pcbuilder.core.modules.auth.dto.LoginRequestDto;
 import com.pcbuilder.core.modules.auth.dto.MessageResponseDto;
 import com.pcbuilder.core.modules.auth.dto.RegisterRequestDto;
 import com.pcbuilder.core.modules.auth.jwt.JwtTokenProvider;
-import com.pcbuilder.core.modules.user.repository.UserRepository;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.model.UserRole;
 import com.pcbuilder.core.modules.user.model.UserStatus;
+import com.pcbuilder.core.modules.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,6 +26,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final EmailVerificationService emailVerificationService;
 
     public MessageResponseDto registerUser(RegisterRequestDto request) throws Exception {
         if (isUsernameTaken(request.getUsername())) {
@@ -46,7 +47,9 @@ public class AuthService {
                 .roles(userRoles)
                 .status(UserStatus.ACTIVE)
                 .build();
+        emailVerificationService.createEmailVerificationToken(userEntity);
         userRepository.save(userEntity);
+
         return new MessageResponseDto("User registered successfully");
     }
 

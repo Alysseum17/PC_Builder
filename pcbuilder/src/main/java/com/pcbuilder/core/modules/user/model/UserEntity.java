@@ -39,6 +39,7 @@ public class UserEntity {
     private Set<UserRole> roles = new HashSet<>();
     @Enumerated(EnumType.STRING)
     private UserStatus status;
+    private boolean emailVerified = false;
 
     @PrePersist
     protected void onCreate() {

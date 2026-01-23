@@ -1,6 +1,6 @@
 package com.pcbuilder.core.modules.auth.service;
 
-import com.pcbuilder.core.modules.auth.dto.ForgotPasswordDto;
+import com.pcbuilder.core.modules.auth.dto.MailDto;
 import com.pcbuilder.core.modules.auth.dto.MessageResponseDto;
 import com.pcbuilder.core.modules.auth.dto.ResetPasswordDto;
 import com.pcbuilder.core.modules.auth.model.ResetPasswordToken;
@@ -29,8 +29,9 @@ public class ResetPasswordService {
 
     private static final int EXPIRATION_HOURS = 24;
 
-    public MessageResponseDto forgotPassword(ForgotPasswordDto request) {
+    public MessageResponseDto forgotPassword(MailDto request) {
         userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+            resetPasswordRepository.deleteByUser(user);
             String token = UUID.randomUUID().toString();
 
             ResetPasswordToken resetToken = ResetPasswordToken.builder()

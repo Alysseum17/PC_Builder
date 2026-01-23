@@ -1,6 +1,6 @@
 package com.pcbuilder.core.modules.auth.controller;
 
-import com.pcbuilder.core.modules.auth.dto.ForgotPasswordDto;
+import com.pcbuilder.core.modules.auth.dto.MailDto;
 import com.pcbuilder.core.modules.auth.dto.MessageResponseDto;
 import com.pcbuilder.core.modules.auth.dto.ResetPasswordDto;
 import com.pcbuilder.core.modules.auth.service.ResetPasswordService;
@@ -16,7 +16,7 @@ public class ResetPasswordController {
     private final ResetPasswordService resetPasswordService;
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordDto request) {
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody MailDto request) {
         MessageResponseDto message = resetPasswordService.forgotPassword(request);
         return ResponseEntity.ok(message.getMessage());
     }
