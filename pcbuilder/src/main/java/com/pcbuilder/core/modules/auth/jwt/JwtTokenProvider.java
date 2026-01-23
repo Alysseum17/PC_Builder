@@ -43,6 +43,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(username)
+                .claim("type", "ACCESS")
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey())
@@ -66,6 +67,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(username)
+                .claim("type", "TEMP")
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey())
@@ -80,7 +82,13 @@ public class JwtTokenProvider {
                 .getPayload();
         return claims.getSubject();
     }
-
+    public Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getPayload();
+    }
     public Date getExpirationDateFromJWT(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())

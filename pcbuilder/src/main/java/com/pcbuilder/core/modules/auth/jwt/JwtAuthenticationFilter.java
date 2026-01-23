@@ -1,6 +1,7 @@
 package com.pcbuilder.core.modules.auth.jwt;
 
 import com.pcbuilder.core.modules.auth.userdetails.UserDetailsServiceImpl;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -31,7 +32,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-                String username = jwtTokenProvider.getUsernameFromJWT(jwt);
+                Claims claims = jwtTokenProvider.getClaims(jwt);
+                if("TEMP".equals(claims.get("type"))) {
+                    log.debug("Temporary token detected, skipping authentication");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                String username = claims.getSubject();
                 UserDetails userPrincipal = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
