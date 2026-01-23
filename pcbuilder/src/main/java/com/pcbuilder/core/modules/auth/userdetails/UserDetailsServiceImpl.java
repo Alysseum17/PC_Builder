@@ -1,6 +1,6 @@
 package com.pcbuilder.core.modules.auth.userdetails;
 
-import com.pcbuilder.core.modules.auth.repository.UserRepository;
+import com.pcbuilder.core.modules.user.repository.UserRepository;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

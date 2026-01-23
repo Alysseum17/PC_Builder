@@ -1,12 +1,14 @@
 package com.pcbuilder.core.modules.auth.userdetails;
 
 import com.pcbuilder.core.modules.user.model.UserEntity;
+import com.pcbuilder.core.modules.user.model.UserRole;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,15 +30,21 @@ public class UserPrincipal implements UserDetails {
         this.enabled = enabled;
     }
     public static UserPrincipal create(UserEntity user) {
-        List<GrantedAuthority> grantedAuthorities = user.getRoles().stream().map(role -> {
-            return new SimpleGrantedAuthority(role.name());
-        }).collect(Collectors.toList());
+        Collection<UserRole> roles = user.getRoles();
+        if (roles == null) {
+            roles = Collections.emptyList();
+        }
+
+        List<GrantedAuthority> grantedAuthorities = roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .collect(Collectors.toList());
+
         return new UserPrincipal(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getHash_password(),
-                null,
+                grantedAuthorities,
                 true
         );
     }

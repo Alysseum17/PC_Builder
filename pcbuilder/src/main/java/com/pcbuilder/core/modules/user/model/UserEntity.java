@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Data
@@ -30,8 +31,12 @@ public class UserEntity {
     @Column(nullable = false, updatable = false)
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
     @Enumerated(EnumType.STRING)
-    private HashSet<UserRole> roles;
+    @Builder.Default
+    private Set<UserRole> roles = new HashSet<>();
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 

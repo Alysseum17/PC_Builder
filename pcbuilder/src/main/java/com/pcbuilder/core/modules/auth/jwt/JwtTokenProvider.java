@@ -31,7 +31,7 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return (userDetails.getUsername());
+        return generateToken(userDetails.getUsername());
     }
 
     public String generateToken(String username) {
