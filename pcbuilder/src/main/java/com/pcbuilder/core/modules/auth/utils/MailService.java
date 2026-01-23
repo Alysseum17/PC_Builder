@@ -17,4 +17,13 @@ public class MailService {
         message.setText("This is a test email sent from the PCBuilder application.");
         mailSender.send(message);
     }
+
+    public void sendResetPasswordEmail(String to, String resetLink) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Password Reset Request");
+        message.setText("To reset your password, click the following link: " + resetLink +
+                        "\nThis link will expire in 24 hours.");
+        mailSender.send(message);
+    }
 }
