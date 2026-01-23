@@ -1,6 +1,6 @@
 package com.pcbuilder.core.modules.auth.service;
 
-import com.pcbuilder.core.modules.auth.dto.MessageResponseDto;
+import com.pcbuilder.core.modules.auth.dto.MessageResponse;
 import com.pcbuilder.core.modules.auth.model.EmailVerificationToken;
 import com.pcbuilder.core.modules.auth.repository.EmailVerificationRepository;
 import com.pcbuilder.core.modules.auth.utils.MailService;
@@ -22,7 +22,7 @@ public class EmailVerificationService {
     private final MailService mailService;
     private final static int EXPIRATION_MINUTES = 60;
 
-    public MessageResponseDto createEmailVerificationToken(UserEntity user) {
+    public MessageResponse createEmailVerificationToken(UserEntity user) {
         String token = UUID.randomUUID().toString();
 
         EmailVerificationToken emailVerificationToken = EmailVerificationToken.builder()
@@ -36,10 +36,10 @@ public class EmailVerificationService {
 
         mailService.sendEmailVerificationEmail(user.getEmail(), verificationLink);
 
-        return new MessageResponseDto("Verification email sent");
+        return new MessageResponse("Verification email sent");
     }
 
-    public MessageResponseDto verifyEmail(String token) {
+    public MessageResponse verifyEmail(String token) {
         EmailVerificationToken emailToken = emailVerificationRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid or missing token"));
 
@@ -53,10 +53,10 @@ public class EmailVerificationService {
 
         emailVerificationRepository.delete(emailToken);
 
-        return new MessageResponseDto("Email verified successfully");
+        return new MessageResponse("Email verified successfully");
     }
 
-    public MessageResponseDto resendVerification(String email) {
+    public MessageResponse resendVerification(String email) {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User with given email not found"));
         if(user.isEmailVerified()) {
@@ -66,6 +66,6 @@ public class EmailVerificationService {
 
         createEmailVerificationToken(user);
 
-        return new MessageResponseDto("Email verification email resent");
+        return new MessageResponse("Email verification email resent");
     }
 }

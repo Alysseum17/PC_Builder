@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LoginRequestDto {
+public class LoginRequest {
 
     @NotBlank(message = "Username cannot be blank")
     @NotNull(message = "Username cannot be null")

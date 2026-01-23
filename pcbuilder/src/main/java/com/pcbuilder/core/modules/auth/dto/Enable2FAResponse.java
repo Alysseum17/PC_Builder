@@ -5,11 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class JwtResponseDto {
-    private String authToken;
-    private String refreshToken;
+@NoArgsConstructor
+@Builder
+public class Enable2FAResponse {
+    private String secret;
+    private String qrCodeUrl;
+    private List<String> backupCodes;
 }

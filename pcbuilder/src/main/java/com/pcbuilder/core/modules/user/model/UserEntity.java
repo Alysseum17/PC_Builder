@@ -41,6 +41,14 @@ public class UserEntity {
     private UserStatus status;
     private boolean emailVerified = false;
 
+    private boolean twoFactorEnabled = false;
+    private String twoFactorSecret;
+    @ElementCollection
+    @CollectionTable(name = "user_backup_codes",
+            joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "backup_code")
+    private Set<String> backupCodes = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         this.created_at = LocalDateTime.now();

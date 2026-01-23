@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResetPasswordDto {
+public class ResetPasswordRequest {
     @NotBlank(message = "Password cannot be blank")
     @NotNull(message = "Password cannot be null")
     @Size(min = 6, message = "Password must be at least 6 characters long")

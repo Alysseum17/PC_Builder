@@ -1,9 +1,6 @@
 package com.pcbuilder.core.modules.auth.service;
 
-import com.pcbuilder.core.modules.auth.dto.JwtResponseDto;
-import com.pcbuilder.core.modules.auth.dto.LoginRequestDto;
-import com.pcbuilder.core.modules.auth.dto.MessageResponseDto;
-import com.pcbuilder.core.modules.auth.dto.RegisterRequestDto;
+import com.pcbuilder.core.modules.auth.dto.*;
 import com.pcbuilder.core.modules.auth.jwt.JwtTokenProvider;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.model.UserRole;
@@ -27,8 +24,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailVerificationService emailVerificationService;
+    private final TwoFactorService twoFactorService;
 
-    public MessageResponseDto registerUser(RegisterRequestDto request) throws Exception {
+    public MessageResponse register(RegisterRequest request) throws Exception {
         if (isUsernameTaken(request.getUsername())) {
             throw new Exception("Username is already taken");
         }
@@ -50,21 +48,27 @@ public class AuthService {
         emailVerificationService.createEmailVerificationToken(userEntity);
         userRepository.save(userEntity);
 
-        return new MessageResponseDto("User registered successfully");
+        return new MessageResponse("User registered successfully");
     }
 
-    public JwtResponseDto login(LoginRequestDto request) throws Exception {
+    public Object login(LoginRequest request) throws Exception {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
                         request.getPassword()
         ));
     SecurityContextHolder.getContext().setAuthentication(authentication);
-
-    String authToken = jwtTokenProvider.generateToken(authentication);
+    UserEntity userEntity = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new Exception("User not found"));
+    if (userEntity.isTwoFactorEnabled()) {
+       String tempToken = jwtTokenProvider.generateTempToken(request.getUsername());
+       return TwoFactorRequiredResponse.builder()
+               .message("Need to verify 2FA with temp token" + tempToken)
+               .tempToken(tempToken);
+    }
+    String authToken = jwtTokenProvider.generateToken(request.getUsername());
     String refreshToken = jwtTokenProvider.generateRefreshToken(request.getUsername());
 
-    return JwtResponseDto.builder().authToken(authToken).refreshToken(refreshToken).build();
+    return JwtResponse.builder().authToken(authToken).refreshToken(refreshToken).build();
 
     }
 

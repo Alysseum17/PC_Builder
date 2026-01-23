@@ -1,7 +1,7 @@
 package com.pcbuilder.core.modules.auth.controller;
 
-import com.pcbuilder.core.modules.auth.dto.MailDto;
-import com.pcbuilder.core.modules.auth.dto.MessageResponseDto;
+import com.pcbuilder.core.modules.auth.dto.MailRequest;
+import com.pcbuilder.core.modules.auth.dto.MessageResponse;
 import com.pcbuilder.core.modules.auth.service.EmailVerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +15,12 @@ public class EmailVerificationController {
     private final EmailVerificationService emailVerificationService;
     @PostMapping("/verify-email")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
-        MessageResponseDto message = emailVerificationService.verifyEmail(token);
+        MessageResponse message = emailVerificationService.verifyEmail(token);
         return ResponseEntity.ok(message.getMessage());
     }
     @PostMapping("/resend-verification")
-    public ResponseEntity<String> resendVerification(@Valid @RequestBody MailDto request) throws Exception {
-        MessageResponseDto message = emailVerificationService.resendVerification(request.getEmail());
+    public ResponseEntity<String> resendVerification(@Valid @RequestBody MailRequest request) throws Exception {
+        MessageResponse message = emailVerificationService.resendVerification(request.getEmail());
         return ResponseEntity.ok(message.getMessage());
     }
 }

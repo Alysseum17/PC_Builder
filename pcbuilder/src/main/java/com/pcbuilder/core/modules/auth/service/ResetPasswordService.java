@@ -1,8 +1,8 @@
 package com.pcbuilder.core.modules.auth.service;
 
-import com.pcbuilder.core.modules.auth.dto.MailDto;
-import com.pcbuilder.core.modules.auth.dto.MessageResponseDto;
-import com.pcbuilder.core.modules.auth.dto.ResetPasswordDto;
+import com.pcbuilder.core.modules.auth.dto.MailRequest;
+import com.pcbuilder.core.modules.auth.dto.MessageResponse;
+import com.pcbuilder.core.modules.auth.dto.ResetPasswordRequest;
 import com.pcbuilder.core.modules.auth.model.ResetPasswordToken;
 import com.pcbuilder.core.modules.auth.repository.ResetPasswordRepository;
 import com.pcbuilder.core.modules.auth.utils.MailService;
@@ -29,7 +29,7 @@ public class ResetPasswordService {
 
     private static final int EXPIRATION_HOURS = 24;
 
-    public MessageResponseDto forgotPassword(MailDto request) {
+    public MessageResponse forgotPassword(MailRequest request) {
         userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
             resetPasswordRepository.deleteByUser(user);
             String token = UUID.randomUUID().toString();
@@ -47,10 +47,10 @@ public class ResetPasswordService {
             mailService.sendResetPasswordEmail(user.getEmail(), resetLink);
 
         });
-        return new MessageResponseDto("Password reset email sent");
+        return new MessageResponse("Password reset email sent");
     }
 
-    public MessageResponseDto resetPassword(ResetPasswordDto request, String token) {
+    public MessageResponse resetPassword(ResetPasswordRequest request, String token) {
         ResetPasswordToken resetToken = resetPasswordRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid or missing token")); // Тут можна кидати помилку
 
@@ -68,7 +68,7 @@ public class ResetPasswordService {
 
         resetToken.setUsed(true);
         resetPasswordRepository.save(resetToken);
-        return new MessageResponseDto("Password has been reset successfully");
+        return new MessageResponse("Password has been reset successfully");
     }
 
     @Scheduled(cron = "0 0 * * * ?")

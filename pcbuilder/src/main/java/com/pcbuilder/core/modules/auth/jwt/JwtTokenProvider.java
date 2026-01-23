@@ -24,6 +24,9 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh-expiration}")
     private long jwtRefreshExpirationMs;
 
+    @Value("${jwt.temp-expiration}")
+    private long jwtTempExpirationMs;
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -48,6 +51,18 @@ public class JwtTokenProvider {
     public String generateRefreshToken(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationMs);
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String generateTempToken(String username) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtTempExpirationMs);
 
         return Jwts.builder()
                 .setSubject(username)

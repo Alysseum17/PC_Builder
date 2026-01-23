@@ -1,9 +1,6 @@
 package com.pcbuilder.core.modules.auth.controller;
 
-import com.pcbuilder.core.modules.auth.dto.JwtResponseDto;
-import com.pcbuilder.core.modules.auth.dto.LoginRequestDto;
-import com.pcbuilder.core.modules.auth.dto.MessageResponseDto;
-import com.pcbuilder.core.modules.auth.dto.RegisterRequestDto;
+import com.pcbuilder.core.modules.auth.dto.*;
 import com.pcbuilder.core.modules.auth.service.AuthService;
 import com.pcbuilder.core.modules.auth.utils.MailService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,32 +22,36 @@ public class AuthController {
     private final AuthService authService;
     private final MailService mailService;
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequestDto registerDto) throws Exception {
-        MessageResponseDto message = authService.registerUser(registerDto);
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest registerDto) throws Exception {
+        MessageResponse message = authService.register(registerDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(message.getMessage());
     }
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequestDto loginDto, HttpServletResponse response) throws Exception {
-        JwtResponseDto jwtResponseDto = authService.login(loginDto);
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest loginDto, HttpServletResponse response) throws Exception {
+        Object result = authService.login(loginDto);
+        if(result instanceof JwtResponse jwtResponse) {
+            ResponseCookie authCookie = ResponseCookie.from("authToken", jwtResponse.getAuthToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(60 * 15)
+                    .sameSite("Strict")
+                    .build();
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", jwtResponse.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .sameSite("Strict")
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, authCookie.toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        ResponseCookie authCookie = ResponseCookie.from("authToken", jwtResponseDto.getAuthToken())
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(60 * 15)
-                .sameSite("Strict")
-                .build();
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", jwtResponseDto.getRefreshToken())
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Strict")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, authCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-
-        return ResponseEntity.ok("You have been logged in");
+            return ResponseEntity.ok("You have been logged in");
+        }else if(result instanceof TwoFactorRequiredResponse twoFactorRequiredResponse) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(twoFactorRequiredResponse.getMessage());
+        }
+       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
     }
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletResponse response) {
@@ -72,6 +73,7 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         return ResponseEntity.ok("You have been logged out");
+
     }
 }
 

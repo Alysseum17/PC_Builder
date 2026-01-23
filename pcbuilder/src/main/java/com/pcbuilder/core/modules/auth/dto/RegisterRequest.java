@@ -13,7 +13,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequestDto {
+public class RegisterRequest {
     @NotBlank(message = "Username cannot be blank")
     @NotNull(message = "Username cannot be null")
     @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
