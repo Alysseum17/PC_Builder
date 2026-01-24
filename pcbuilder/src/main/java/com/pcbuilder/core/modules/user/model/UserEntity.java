@@ -41,6 +41,10 @@ public class UserEntity {
     private UserStatus status;
     private boolean emailVerified = false;
 
+    @Enumerated(EnumType.STRING)
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+    private String providerId;
+
     private boolean twoFactorEnabled = false;
     private String twoFactorSecret;
     @ElementCollection
@@ -52,6 +56,10 @@ public class UserEntity {
     @PrePersist
     protected void onCreate() {
         this.created_at = LocalDateTime.now();
+    }
+
+    public String getProvider() {
+        return authProvider.name();
     }
 
 }

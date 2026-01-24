@@ -1,6 +1,8 @@
 spring:
   application:
     name: pcbuilder
+    oauth2:
+      authorizated-redirect-uris: "http://localhost:3000/oauth2/redirect"
 
   datasource:
     url: jdbc:postgresql://localhost:5432/pcbuilder_db
