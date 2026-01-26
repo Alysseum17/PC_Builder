@@ -2,8 +2,8 @@ package com.pcbuilder.core.modules.auth.controller;
 
 import com.pcbuilder.core.modules.auth.dto.*;
 import com.pcbuilder.core.modules.auth.service.AuthService;
+import com.pcbuilder.core.modules.auth.strategy.LoginResponseHandler;
 import com.pcbuilder.core.modules.auth.utils.CookieUtils;
-import com.pcbuilder.core.modules.auth.utils.MailService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -20,24 +20,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService authService;
-    private final MailService mailService;
+    private final LoginResponseHandler loginResponseHandler;
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest registerDto) throws Exception {
         MessageResponse message = authService.register(registerDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(message.getMessage());
     }
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest loginDto, HttpServletResponse response) throws Exception {
-        Object result = authService.login(loginDto);
-        if(result instanceof JwtResponse jwtResponse) {
-            CookieUtils.addCookie(response, "authToken", jwtResponse.getAuthToken(), 60*15);
-            CookieUtils.addCookie(response, "refreshToken", jwtResponse.getRefreshToken(), 7*24*60*60);
-            return ResponseEntity.ok("You have been logged in");
-        }else if(result instanceof TwoFactorRequiredResponse twoFactorRequiredResponse) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(twoFactorRequiredResponse.getMessage());
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginDto, HttpServletResponse response) throws Exception {
+        var loginResult = authService.login(loginDto);
+
+        if (loginResult.isPresent()) {
+            return loginResponseHandler.handleLoginResponse(loginResult.get(), response);
         }
-       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
     }
+
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
        CookieUtils.deleteCookie(request, response, "authToken");

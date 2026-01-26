@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -50,25 +51,26 @@ public class ResetPasswordService {
         return new MessageResponse("Password reset email sent");
     }
 
-    public MessageResponse resetPassword(ResetPasswordRequest request, String token) {
-        ResetPasswordToken resetToken = resetPasswordRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid or missing token")); // Тут можна кидати помилку
+    public Optional<MessageResponse> resetPassword(ResetPasswordRequest request, String token) {
+        return resetPasswordRepository.findByToken(token)
+                .map(resetToken -> {
+                    if (resetToken.isExpired() || resetToken.isUsed()) {
+                        throw new IllegalStateException("Token is invalid or expired");
+                    }
 
-        if (resetToken.isExpired() || resetToken.isUsed()) {
-            throw new RuntimeException("Token is invalid");
-        }
+                    if (!request.getPassword().equals(request.getConfirmPassword())) {
+                        throw new IllegalArgumentException("Passwords do not match");
+                    }
 
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("Passwords do not match");
-        }
+                    UserEntity user = resetToken.getUser();
+                    user.setHash_password(passwordEncoder.encode(request.getPassword()));
+                    userRepository.save(user);
 
-        UserEntity user = resetToken.getUser();
-        user.setHash_password(passwordEncoder.encode(request.getPassword()));
-        userRepository.save(user);
+                    resetToken.setUsed(true);
+                    resetPasswordRepository.save(resetToken);
 
-        resetToken.setUsed(true);
-        resetPasswordRepository.save(resetToken);
-        return new MessageResponse("Password has been reset successfully");
+                    return new MessageResponse("Password has been reset successfully");
+                });
     }
 
     @Scheduled(cron = "0 0 * * * ?")

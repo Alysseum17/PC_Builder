@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -45,35 +46,32 @@ public class AuthService {
                 .roles(userRoles)
                 .status(UserStatus.ACTIVE)
                 .build();
-        emailVerificationService.createEmailVerificationToken(userEntity);
         userRepository.save(userEntity);
+        emailVerificationService.createEmailVerificationToken(userEntity);
 
         return new MessageResponse("User registered successfully");
     }
 
-    public Object login(LoginRequest request) throws Exception {
+    public Optional<AuthResult> login(LoginRequest request) throws Exception {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
                         request.getPassword()
         ));
     SecurityContextHolder.getContext().setAuthentication(authentication);
-    UserEntity userEntity = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new Exception("User not found"));
-    if (userEntity.isTwoFactorEnabled()) {
-       String tempToken = jwtTokenProvider.generateTempToken(request.getUsername());
-       return TwoFactorRequiredResponse.builder()
-               .message("Need to verify 2FA with temp token" + tempToken)
-               .tempToken(tempToken);
+    return userRepository.findByUsername(request.getUsername()).map(userEntity -> {
+       if (userEntity.isTwoFactorEnabled()) {
+           String tempToken = jwtTokenProvider.generateTempToken(request.getUsername());
+           return (AuthResult) TwoFactorRequiredResponse.builder()
+                   .message("Need to verify 2FA with temp token" + tempToken)
+                   .tempToken(tempToken);
+       }
+       String authToken = jwtTokenProvider.generateToken(request.getUsername());
+       String refreshToken = jwtTokenProvider.generateRefreshToken(request.getUsername());
+
+       return JwtResponse.builder().authToken(authToken).refreshToken(refreshToken).build();
+        });
     }
-    String authToken = jwtTokenProvider.generateToken(request.getUsername());
-    String refreshToken = jwtTokenProvider.generateRefreshToken(request.getUsername());
-
-    return JwtResponse.builder().authToken(authToken).refreshToken(refreshToken).build();
-
-    }
-
-
-
 
     private boolean isUsernameTaken(String username) {
         return userRepository.existsByUsername(username);

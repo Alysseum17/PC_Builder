@@ -11,6 +11,7 @@
     import org.springframework.stereotype.Service;
 
     import java.time.LocalDateTime;
+    import java.util.Optional;
     import java.util.UUID;
 
     @Service
@@ -39,33 +40,31 @@
             return new MessageResponse("Verification email sent");
         }
 
-        public MessageResponse verifyEmail(String token) {
-            EmailVerificationToken emailToken = emailVerificationRepository.findByToken(token)
-                    .orElseThrow(() -> new RuntimeException("Invalid or missing token"));
+        public Optional<MessageResponse> verifyEmail(String token) {
+            return emailVerificationRepository.findByToken(token)
+                    .map(emailToken -> {
+                        if (emailToken.isExpired()) {
+                            throw new IllegalStateException("Token is expired");
+                        }
+                        UserEntity user = emailToken.getUser();
+                        user.setEmailVerified(true);
+                        userRepository.save(user);
+                        emailVerificationRepository.delete(emailToken);
 
-            if (emailToken.isExpired()) {
-                throw new RuntimeException("Token is expired");
-            }
-
-            UserEntity user = emailToken.getUser();
-            user.setEmailVerified(true);
-            userRepository.save(user);
-
-            emailVerificationRepository.delete(emailToken);
-
-            return new MessageResponse("Email verified successfully");
+                        return new MessageResponse("Email verified successfully");
+                    });
         }
 
-        public MessageResponse resendVerification(String email) {
-            UserEntity user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User with given email not found"));
-            if(user.isEmailVerified()) {
-                throw new RuntimeException("Email is already verified");
-            }
-            emailVerificationRepository.findByUser(user).ifPresent(emailVerificationRepository::delete);
-
-            createEmailVerificationToken(user);
-
-            return new MessageResponse("Email verification email resent");
+        public Optional<MessageResponse> resendVerification(String email) {
+            return userRepository.findByEmail(email)
+                    .map(user -> {
+                        if (user.isEmailVerified()) {
+                            throw new IllegalStateException("Email is already verified");
+                        }
+                        emailVerificationRepository.findByUser(user)
+                                .ifPresent(emailVerificationRepository::delete);
+                        createEmailVerificationToken(user);
+                        return new MessageResponse("Email verification email resent");
+                    });
         }
     }

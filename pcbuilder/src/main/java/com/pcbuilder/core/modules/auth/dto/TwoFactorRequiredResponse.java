@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class TwoFactorRequiredResponse {
+public class TwoFactorRequiredResponse implements AuthResult {
     private String message;
     private String tempToken;
 }

@@ -19,10 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -34,83 +31,92 @@ public class TwoFactorService {
     private final GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator();
 
     @Transactional
-    public Enable2FAResponse enable2FA(String username) {
-        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        if (user.isTwoFactorEnabled()) {
-            throw new RuntimeException("2FA is already enabled");
-        }
-        GoogleAuthenticatorKey credentials = googleAuthenticator.createCredentials();
-        String secretKey = credentials.getKey();
-        user.setTwoFactorSecret(secretKey);
-        Set<String> backupCodes = generateBackupCodes();
-        user.setBackupCodes(backupCodes);
+    public Optional<Enable2FAResponse> enable2FA(String username) {
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    if (user.isTwoFactorEnabled()) {
+                        throw new IllegalStateException("2FA is already enabled");
+                    }
+                    GoogleAuthenticatorKey credentials = googleAuthenticator.createCredentials();
+                    String secretKey = credentials.getKey();
 
-        userRepository.save(user);
+                    user.setTwoFactorSecret(secretKey);
+                    user.setBackupCodes(generateBackupCodes());
+                    userRepository.save(user);
 
-        String qrCodeUrl = GoogleAuthenticatorQRGenerator.getOtpAuthURL(
-                "PCBuilder",
-                user.getEmail(),
-                credentials
-        );
-        return Enable2FAResponse.builder().
-                qrCodeUrl(qrCodeUrl).
-                secret(secretKey).
-                backupCodes(new ArrayList<String>(backupCodes)).
-                build();
+                    String qrCodeUrl = GoogleAuthenticatorQRGenerator.getOtpAuthURL("PCBuilder", user.getEmail(), credentials);
+
+                    return Enable2FAResponse.builder()
+                            .qrCodeUrl(qrCodeUrl)
+                            .secret(secretKey)
+                            .backupCodes(new ArrayList<>(user.getBackupCodes()))
+                            .build();
+                });
     }
+
     @Transactional
-    public MessageResponse verify2FASetup(String username, Verify2FASetupRequest request) {
-        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        if (user.isTwoFactorEnabled()) {
-            throw new RuntimeException("2FA is already enabled");
-        }
-       if (user.getTwoFactorSecret() == null) {
-              throw new RuntimeException("2FA setup not initiated");
-       }
-       int code = Integer.parseInt(request.getCode());
-       boolean isCodeValid = googleAuthenticator.authorize(user.getTwoFactorSecret(), code);
-         if (!isCodeValid) {
-              throw new RuntimeException("Invalid 2FA code");
-         }
-        user.setTwoFactorEnabled(true);
-        userRepository.save(user);
-        return new MessageResponse("2FA enabled successfully");
+    public Optional<MessageResponse> verify2FASetup(String username, Verify2FASetupRequest request) {
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    if (user.isTwoFactorEnabled()) throw new IllegalStateException("2FA is already enabled");
+                    if (user.getTwoFactorSecret() == null) throw new IllegalStateException("2FA setup not initiated");
+
+                    int code = Integer.parseInt(request.getCode());
+                    if (!googleAuthenticator.authorize(user.getTwoFactorSecret(), code)) {
+                        throw new IllegalArgumentException("Invalid 2FA code");
+                    }
+
+                    user.setTwoFactorEnabled(true);
+                    userRepository.save(user);
+                    return new MessageResponse("2FA enabled successfully");
+                });
     }
-    public MessageResponse disable2FA(String username, String code) {
-        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        if (!user.isTwoFactorEnabled()) {
-            throw new RuntimeException("2FA is not enabled");
-        }
-        if(!verify2FACode(user.getUsername(), code)) {
-            throw new RuntimeException("Invalid 2FA code");
-        }
-        user.setTwoFactorEnabled(false);
-        user.setTwoFactorSecret(null);
-        user.setBackupCodes(new HashSet<>());
-        userRepository.save(user);
-        return new MessageResponse("2FA disabled successfully");
-    }
+
     @Transactional
-    public JwtResponse verify2FALogin(Verify2FALoginRequest request) {
-        if(!jwtTokenProvider.validateToken(request.getTempToken())) {
-            throw new RuntimeException("Invalid temp token");
+    public Optional<MessageResponse> disable2FA(String username, String code) {
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    if (!user.isTwoFactorEnabled()) throw new IllegalStateException("2FA is not enabled");
+
+                    if (!verify2FACode(user, code)) {
+                        throw new IllegalArgumentException("Invalid 2FA code");
+                    }
+
+                    user.setTwoFactorEnabled(false);
+                    user.setTwoFactorSecret(null);
+                    user.setBackupCodes(new HashSet<>());
+                    userRepository.save(user);
+                    return new MessageResponse("2FA disabled successfully");
+                });
+    }
+
+    @Transactional
+    public Optional<JwtResponse> verify2FALogin(Verify2FALoginRequest request) {
+        if (!jwtTokenProvider.validateToken(request.getTempToken())) {
+            throw new IllegalArgumentException("Invalid temp token");
         }
+
         String username = jwtTokenProvider.getUsernameFromJWT(request.getTempToken());
-        if(!verify2FACode(username, request.getCode())) {
-            throw new RuntimeException("Invalid 2FA code");
-        }
-        String authToken = jwtTokenProvider.generateToken(username);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
-        return JwtResponse.builder().authToken(authToken).refreshToken(refreshToken).build();
+
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    if (!verify2FACode(user, request.getCode())) {
+                        throw new IllegalArgumentException("Invalid 2FA code");
+                    }
+
+                    String authToken = jwtTokenProvider.generateToken(username);
+                    String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+
+                    return JwtResponse.builder()
+                            .authToken(authToken)
+                            .refreshToken(refreshToken)
+                            .build();
+                });
     }
-    public boolean verify2FACode(String username, String code) {
-        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        if (!user.isTwoFactorEnabled()) {
-            throw new RuntimeException("2FA is not enabled");
-        }
-        if(user.getBackupCodes() != null && user.getBackupCodes().contains(code)) {
-            Set<String> backupCodes = user.getBackupCodes();
-            backupCodes.remove(code);
+
+    private boolean verify2FACode(UserEntity user, String code) {
+        if (user.getBackupCodes() != null && user.getBackupCodes().contains(code)) {
+            user.getBackupCodes().remove(code);
             userRepository.save(user);
             return true;
         }
@@ -121,6 +127,7 @@ public class TwoFactorService {
             return false;
         }
     }
+
     private Set<String> generateBackupCodes() {
         SecureRandom secureRandom = new SecureRandom();
         return IntStream.range(0, 10).

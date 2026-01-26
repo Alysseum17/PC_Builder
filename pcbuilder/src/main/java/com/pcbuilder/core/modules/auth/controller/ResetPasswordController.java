@@ -21,8 +21,10 @@ public class ResetPasswordController {
         return ResponseEntity.ok(message.getMessage());
     }
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request, @RequestParam String token) {
-        MessageResponse message = resetPasswordService.resetPassword(request, token);
-        return ResponseEntity.ok(message.getMessage());
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request,
+                                                @RequestParam String token) {
+        return resetPasswordService.resetPassword(request, token)
+                .map(response -> ResponseEntity.ok(response.getMessage()))
+                .orElse(ResponseEntity.notFound().build());
     }
 }
