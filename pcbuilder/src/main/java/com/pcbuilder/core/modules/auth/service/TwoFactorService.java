@@ -7,6 +7,8 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.pcbuilder.core.modules.auth.dto.*;
 import com.pcbuilder.core.modules.auth.jwt.JwtTokenProvider;
+import com.pcbuilder.core.modules.exception.TokenException;
+import com.pcbuilder.core.modules.exception.TwoFAException;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.repository.UserRepository;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
@@ -35,7 +37,7 @@ public class TwoFactorService {
         return userRepository.findByUsername(username)
                 .map(user -> {
                     if (user.isTwoFactorEnabled()) {
-                        throw new IllegalStateException("2FA is already enabled");
+                        throw new TwoFAException("2FA is already enabled");
                     }
                     GoogleAuthenticatorKey credentials = googleAuthenticator.createCredentials();
                     String secretKey = credentials.getKey();
@@ -58,12 +60,12 @@ public class TwoFactorService {
     public Optional<MessageResponse> verify2FASetup(String username, Verify2FASetupRequest request) {
         return userRepository.findByUsername(username)
                 .map(user -> {
-                    if (user.isTwoFactorEnabled()) throw new IllegalStateException("2FA is already enabled");
-                    if (user.getTwoFactorSecret() == null) throw new IllegalStateException("2FA setup not initiated");
+                    if (user.isTwoFactorEnabled()) throw new TwoFAException("2FA is already enabled");
+                    if (user.getTwoFactorSecret() == null) throw new TwoFAException("2FA setup not initiated");
 
                     int code = Integer.parseInt(request.getCode());
                     if (!googleAuthenticator.authorize(user.getTwoFactorSecret(), code)) {
-                        throw new IllegalArgumentException("Invalid 2FA code");
+                        throw new TwoFAException("Invalid 2FA code");
                     }
 
                     user.setTwoFactorEnabled(true);
@@ -76,10 +78,10 @@ public class TwoFactorService {
     public Optional<MessageResponse> disable2FA(String username, String code) {
         return userRepository.findByUsername(username)
                 .map(user -> {
-                    if (!user.isTwoFactorEnabled()) throw new IllegalStateException("2FA is not enabled");
+                    if (!user.isTwoFactorEnabled()) throw new TwoFAException("2FA is not enabled");
 
                     if (!verify2FACode(user, code)) {
-                        throw new IllegalArgumentException("Invalid 2FA code");
+                        throw new TwoFAException("Invalid 2FA code");
                     }
 
                     user.setTwoFactorEnabled(false);
@@ -93,7 +95,7 @@ public class TwoFactorService {
     @Transactional
     public Optional<JwtResponse> verify2FALogin(Verify2FALoginRequest request) {
         if (!jwtTokenProvider.validateToken(request.getTempToken())) {
-            throw new IllegalArgumentException("Invalid temp token");
+            throw new TokenException("Invalid temp token");
         }
 
         String username = jwtTokenProvider.getUsernameFromJWT(request.getTempToken());
@@ -101,14 +103,14 @@ public class TwoFactorService {
         return userRepository.findByUsername(username)
                 .map(user -> {
                     if (!verify2FACode(user, request.getCode())) {
-                        throw new IllegalArgumentException("Invalid 2FA code");
+                        throw new TwoFAException("Invalid 2FA code");
                     }
 
-                    String authToken = jwtTokenProvider.generateToken(username);
+                    String accessToken = jwtTokenProvider.generateToken(username);
                     String refreshToken = jwtTokenProvider.generateRefreshToken(username);
 
                     return JwtResponse.builder()
-                            .authToken(authToken)
+                            .accessToken(accessToken)
                             .refreshToken(refreshToken)
                             .build();
                 });

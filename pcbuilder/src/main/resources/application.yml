@@ -2,9 +2,7 @@ spring:
   application:
     name: pcbuilder
     oauth2:
-      authorizated-redirect-uris:
-        - http://localhost:3000/oauth2/redirect
-        - http://localhost:8080/oauth2/redirect
+      authorized-redirect-uris: http://localhost:3000/oauth2/redirect,http://localhost:8080/oauth2/redirect
   security:
     oauth2:
         client:

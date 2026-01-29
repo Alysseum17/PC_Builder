@@ -1,5 +1,6 @@
 package com.pcbuilder.core.modules.auth.dto;
 
+import com.pcbuilder.core.modules.auth.dto.validation.Login;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -13,10 +14,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LoginRequest {
 
-    @NotBlank(message = "Username cannot be blank")
-    @NotNull(message = "Username cannot be null")
-    @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
-    private String username;
+    @NotBlank(message = "Login cannot be blank")
+    @NotNull(message = "Login cannot be null")
+    @Login(message = "Login must be a valid email or username (3-50 chars)")
+    private String login;
 
 
     @NotBlank(message = "Password cannot be blank")

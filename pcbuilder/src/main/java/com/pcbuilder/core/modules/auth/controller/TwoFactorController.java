@@ -1,13 +1,14 @@
 package com.pcbuilder.core.modules.auth.controller;
 
 import com.pcbuilder.core.modules.auth.dto.Enable2FAResponse;
+import com.pcbuilder.core.modules.auth.dto.JwtResponse;
 import com.pcbuilder.core.modules.auth.dto.Verify2FALoginRequest;
 import com.pcbuilder.core.modules.auth.dto.Verify2FASetupRequest;
 import com.pcbuilder.core.modules.auth.service.TwoFactorService;
-import com.pcbuilder.core.modules.auth.utils.CookieUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +19,6 @@ import org.springframework.web.bind.annotation.*;
 public class TwoFactorController {
 
     private final TwoFactorService twoFactorService;
-    static private final int AUTH_TOKEN_EXPIRY = 15 * 60;
-    static private final int REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60;
-
 
     @PostMapping("/enable")
     public ResponseEntity<Enable2FAResponse> enableTwoFactor(Authentication authentication) {
@@ -44,15 +42,10 @@ public class TwoFactorController {
     }
 
     @PostMapping("/verify-login")
-    public ResponseEntity<?> verifyTwoFactorLogin(@Valid @RequestBody Verify2FALoginRequest request, HttpServletResponse response) {
+    public ResponseEntity<JwtResponse> verifyTwoFactorLogin(@Valid @RequestBody Verify2FALoginRequest request, HttpServletResponse response) {
 
         return twoFactorService.verify2FALogin(request)
-                .map(jwtResponse -> {
-                    CookieUtils.addCookie(response, "authToken", jwtResponse.getAuthToken(), AUTH_TOKEN_EXPIRY);
-                    CookieUtils.addCookie(response, "refreshToken", jwtResponse.getRefreshToken(), REFRESH_TOKEN_EXPIRY);
-
-                    return ResponseEntity.ok("You have been logged in");
-                })
-                .orElse(ResponseEntity.status(401).body("User not found or invalid token"));
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 }

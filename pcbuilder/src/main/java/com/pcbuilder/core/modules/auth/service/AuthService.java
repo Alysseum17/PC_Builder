@@ -2,6 +2,9 @@ package com.pcbuilder.core.modules.auth.service;
 
 import com.pcbuilder.core.modules.auth.dto.*;
 import com.pcbuilder.core.modules.auth.jwt.JwtTokenProvider;
+import com.pcbuilder.core.modules.exception.DuplicateResourceException;
+import com.pcbuilder.core.modules.exception.PasswordMismatchException;
+import com.pcbuilder.core.modules.exception.TokenException;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.model.UserRole;
 import com.pcbuilder.core.modules.user.model.UserStatus;
@@ -25,17 +28,16 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailVerificationService emailVerificationService;
-    private final TwoFactorService twoFactorService;
 
-    public MessageResponse register(RegisterRequest request) throws Exception {
-        if (isUsernameTaken(request.getUsername())) {
-            throw new Exception("Username is already taken");
+    public MessageResponse register(RegisterRequest request) throws DuplicateResourceException, PasswordMismatchException {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new DuplicateResourceException("Username is already taken");
         }
-        if (isEmailTaken(request.getEmail())) {
-            throw new Exception("Email is already registered");
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("Email is already in use");
         }
         if(!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new Exception("Passwords do not match");
+            throw new PasswordMismatchException("Passwords don't match");
         }
         HashSet<UserRole> userRoles = new HashSet<>();
         userRoles.add(UserRole.USER);
@@ -55,28 +57,35 @@ public class AuthService {
     public Optional<AuthResult> login(LoginRequest request) throws Exception {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
+                        request.getLogin(),
                         request.getPassword()
         ));
     SecurityContextHolder.getContext().setAuthentication(authentication);
-    return userRepository.findByUsername(request.getUsername()).map(userEntity -> {
+    return userRepository.findByUsernameOrEmail(request.getLogin(), request.getLogin()).map(userEntity -> {
        if (userEntity.isTwoFactorEnabled()) {
-           String tempToken = jwtTokenProvider.generateTempToken(request.getUsername());
-           return (AuthResult) TwoFactorRequiredResponse.builder()
+           String tempToken = jwtTokenProvider.generateTempToken(userEntity.getUsername());
+           return TwoFactorRequiredResponse.builder()
                    .message("Need to verify 2FA with temp token" + tempToken)
-                   .tempToken(tempToken);
+                   .tempToken(tempToken)
+                   .build();
        }
-       String authToken = jwtTokenProvider.generateToken(request.getUsername());
-       String refreshToken = jwtTokenProvider.generateRefreshToken(request.getUsername());
+       String accessToken = jwtTokenProvider.generateToken(userEntity.getUsername());
+       String refreshToken = jwtTokenProvider.generateRefreshToken(userEntity.getUsername());
 
-       return JwtResponse.builder().authToken(authToken).refreshToken(refreshToken).build();
+       return JwtResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
         });
     }
+    public Optional<JwtResponse> refreshToken(RefreshTokenRequest request) throws Exception {
+        if (!jwtTokenProvider.validateToken(request.getRefreshToken())) {
+            throw new TokenException("Invalid refresh token");
+        }
+        String username = jwtTokenProvider.getUsernameFromJWT(request.getRefreshToken());
 
-    private boolean isUsernameTaken(String username) {
-        return userRepository.existsByUsername(username);
-    }
-    private boolean isEmailTaken(String email) {
-        return userRepository.existsByEmail(email);
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    String newAccessToken = jwtTokenProvider.generateToken(username);
+                    String newRefreshToken = jwtTokenProvider.generateRefreshToken(username);
+                    return new JwtResponse(newAccessToken, newRefreshToken);
+                });
     }
 }

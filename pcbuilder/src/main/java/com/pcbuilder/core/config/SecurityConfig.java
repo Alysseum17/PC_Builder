@@ -41,10 +41,25 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/public/**",
-                                "/error"
+                                "/error",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         ).permitAll()
 
                         .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+
+                        .loginProcessingUrl("/api/auth/login")
+
+                        // Параметри, які очікує Spring (якщо у тебе email замість username)
+                        // .usernameParameter("email")
+
+                        // Якщо хочеш свою HTML сторінку, розкоментуй:
+                        // .loginPage("/login")
+
+                        .permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization -> authorization

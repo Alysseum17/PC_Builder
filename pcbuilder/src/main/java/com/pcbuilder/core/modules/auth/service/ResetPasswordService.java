@@ -6,6 +6,8 @@ import com.pcbuilder.core.modules.auth.dto.ResetPasswordRequest;
 import com.pcbuilder.core.modules.auth.model.ResetPasswordToken;
 import com.pcbuilder.core.modules.auth.repository.ResetPasswordRepository;
 import com.pcbuilder.core.modules.auth.utils.MailService;
+import com.pcbuilder.core.modules.exception.PasswordMismatchException;
+import com.pcbuilder.core.modules.exception.TokenException;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -55,11 +57,11 @@ public class ResetPasswordService {
         return resetPasswordRepository.findByToken(token)
                 .map(resetToken -> {
                     if (resetToken.isExpired() || resetToken.isUsed()) {
-                        throw new IllegalStateException("Token is invalid or expired");
+                        throw new TokenException("Invalid or expired token");
                     }
 
                     if (!request.getPassword().equals(request.getConfirmPassword())) {
-                        throw new IllegalArgumentException("Passwords do not match");
+                        throw new PasswordMismatchException("Passwords don't match");
                     }
 
                     UserEntity user = resetToken.getUser();
