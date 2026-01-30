@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Welcome</title>
+    <style type="text/css">
+        body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .wrapper { width: 100%; table-layout: fixed; background-color: #f1f5f9; padding-bottom: 40px; }
+        .main-table { margin: auto; max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 30px; }
+        .btn { background-color: #2563eb; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; }
+        .footer { color: #64748b; font-size: 12px; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+<center class="wrapper">
+    <table class="main-table" width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+            <td style="padding: 25px; text-align: center; background-color: #1e293b;">
+                <h2 style="margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px;">PC BUILDER</h2>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding: 40px 30px; text-align: center;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3067/3067260.png" width="64" alt="pc" style="margin-bottom: 20px; opacity: 0.9;">
+
+                <h1 style="margin: 0 0 15px 0; color: #1e293b; font-size: 24px;">System Ready!</h1>
+
+                <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                    Welcome aboard, <strong th:text="${username}">Builder</strong>.<br>
+                    Your account is fully active. You can now save your configurations, check compatibility, and track prices.
+                </p>
+
+                <a th:href="${loginLink}" class="btn">Start Building</a>
+            </td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        &copy; 2024 PC Builder. Let's create something powerful.
+    </div>
+</center>
+</body>
+</html>

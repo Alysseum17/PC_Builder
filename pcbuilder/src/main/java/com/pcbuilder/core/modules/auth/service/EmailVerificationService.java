@@ -11,6 +11,8 @@
     import org.springframework.stereotype.Service;
 
     import java.time.LocalDateTime;
+    import java.util.HashMap;
+    import java.util.Map;
     import java.util.Optional;
     import java.util.UUID;
 
@@ -35,7 +37,11 @@
 
             String verificationLink = "http://localhost:3000/verify-email?token=" + token;
 
-            mailService.sendEmailVerificationEmail(user.getEmail(), verificationLink);
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("username", user.getUsername());
+            variables.put("verificationLink", verificationLink);
+
+            mailService.sendHtmlEmailAsync(user.getEmail(), "Please Verify Your Email", "verification", variables);
 
             return new MessageResponse("Verification email sent");
         }
@@ -51,6 +57,10 @@
                         userRepository.save(user);
                         emailVerificationRepository.delete(emailToken);
 
+                        Map<String, Object> variables = new HashMap<>();
+                        variables.put("username", user.getUsername());
+                        variables.put("loginLink", "http://localhost:3000/login");
+                        mailService.sendHtmlEmailAsync(user.getEmail(), "Welcome to the Platform!", "welcome", variables);
                         return new MessageResponse("Email verified successfully");
                     });
         }

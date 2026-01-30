@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,7 +49,11 @@ public class ResetPasswordService {
             resetPasswordRepository.save(resetToken);
 
             String resetLink = "http://localhost:3000/reset-password?token=" + token;
-            mailService.sendResetPasswordEmail(user.getEmail(), resetLink);
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("username", user.getUsername());
+            variables.put("resetLink", resetLink);
+
+            mailService.sendHtmlEmailAsync(user.getEmail(), "Reset Your Password", "reset-password", variables);
 
         });
         return new MessageResponse("Password reset email sent");

@@ -16,7 +16,7 @@ public class ResetPasswordRequest {
     @NotNull(message = "Password cannot be null")
     @Size(min = 6, message = "Password must be at least 6 characters long")
     @Pattern(
-            regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=]).*$",
+            regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=_]).*$",
             message = "Password must contain uppercase, lowercase, digit and special character"
     )
     private String password;
