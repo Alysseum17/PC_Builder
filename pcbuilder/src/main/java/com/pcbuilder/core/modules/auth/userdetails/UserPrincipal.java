@@ -48,7 +48,7 @@ public class UserPrincipal implements UserDetails, OAuth2User {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getHash_password(),
+                user.getHashPassword(),
                 grantedAuthorities,
                 true,
                 null
@@ -95,4 +95,5 @@ public class UserPrincipal implements UserDetails, OAuth2User {
     public String getName() {
         return String.valueOf(id);
     }
+
 }

@@ -6,6 +6,7 @@ import com.pcbuilder.core.modules.auth.userdetails.UserPrincipal;
 import com.pcbuilder.core.modules.user.model.AuthProvider;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.repository.UserRepository;
+import com.pcbuilder.core.modules.user.sevice.AvatarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -19,6 +20,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
+    private final AvatarService avatarService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
@@ -58,11 +60,21 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setUsername(oAuth2UserInfo.getEmail());
         user.setEmail(oAuth2UserInfo.getEmail());
         user.setEmailVerified(true);
-        user.setAvatar_url(oAuth2UserInfo.getImageUrl());
+        String[] avatars = avatarService.processOAuthAvatar(oAuth2UserInfo.getImageUrl());
+        if(avatars != null) {
+            user.setAvatarFileName(avatars[0]);
+            user.setAvatarThumbFileName(avatars[1]);
+        }
         return userRepository.save(user);
     }
     private UserEntity updateExistingUser(UserEntity existingUser, OAuth2UserInfo oAuth2UserInfo) {
-        existingUser.setAvatar_url(oAuth2UserInfo.getImageUrl());
+        if(existingUser.getAvatarFileName()==null) {
+            String[] avatars = avatarService.processOAuthAvatar(oAuth2UserInfo.getImageUrl());
+            if(avatars != null) {
+                existingUser.setAvatarFileName(avatars[0]);
+                existingUser.setAvatarThumbFileName(avatars[1]);
+            }
+        }
         return userRepository.save(existingUser);
     }
 }

@@ -23,14 +23,16 @@ public class UserEntity {
 
     @Column(nullable = false, unique = true)
     private String username;
-    @Column(nullable = false)
-    private String hash_password;
+    @Column(name = "hash_password", nullable = false)
+    private String hashPassword;
     @Column(nullable = false, unique = true)
     private String email;
-    private String avatar_url;
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private String avatarFileName;
+    private String avatarThumbFileName;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
@@ -55,7 +57,7 @@ public class UserEntity {
 
     @PrePersist
     protected void onCreate() {
-        this.created_at = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 
     public String getProvider() {

@@ -71,7 +71,7 @@ public class ResetPasswordService {
                     }
 
                     UserEntity user = resetToken.getUser();
-                    user.setHash_password(passwordEncoder.encode(request.getPassword()));
+                    user.setHashPassword(passwordEncoder.encode(request.getPassword()));
                     userRepository.save(user);
 
                     resetToken.setUsed(true);

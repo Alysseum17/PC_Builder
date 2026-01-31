@@ -44,7 +44,7 @@ public class AuthService {
         UserEntity userEntity = UserEntity.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .hash_password(passwordEncoder.encode(request.getPassword()))
+                .hashPassword(passwordEncoder.encode(request.getPassword()))
                 .roles(userRoles)
                 .status(UserStatus.ACTIVE)
                 .build();
