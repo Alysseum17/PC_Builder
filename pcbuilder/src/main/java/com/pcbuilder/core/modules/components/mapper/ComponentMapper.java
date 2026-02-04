@@ -8,7 +8,7 @@ import org.mapstruct.MappingConstants;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ComponentMapper {
-    @Mapping(target = "categoryName", source = "component.category.name")
-    @Mapping(target = "categorySlug", source = "component.category.slug")
-    ComponentResponseDto todDto(Component component);
+    @Mapping(target = "categoryName", source = "category.name")
+    @Mapping(target = "categorySlug", source = "category.slug")
+    ComponentResponseDto toDto(Component component);
 }

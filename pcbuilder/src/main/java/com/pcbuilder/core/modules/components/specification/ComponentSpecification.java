@@ -5,6 +5,8 @@ import com.pcbuilder.core.modules.components.model.Component;
 import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.math.BigDecimal;
+
 public class ComponentSpecification {
     public static Specification<Component> hasCategory(String categorySlug) {
         return (root, query, criteriaBuilder) -> {
@@ -14,7 +16,7 @@ public class ComponentSpecification {
             return criteriaBuilder.equal(root.get("category").get("slug"), categorySlug);
         };
     }
-    public static Specification<Component> priceBetween(Double minPrice, Double maxPrice) {
+    public static Specification<Component> priceBetween(BigDecimal minPrice, BigDecimal maxPrice) {
         return (root, query, criteriaBuilder) -> {
             if (minPrice == null && maxPrice == null) {
                 return criteriaBuilder.conjunction();
