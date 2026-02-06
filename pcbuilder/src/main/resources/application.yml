@@ -22,6 +22,13 @@ spring:
                 - user:email
                 - read:user
               redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+      file-size-threshold: 2KB
+      location: ${java.io.tmpdir}
 
 
             facebook:
@@ -70,6 +77,16 @@ jwt:
   expiration: 86400000
   refresh-expiration: 604800000
   temp-expiration: 300000
+
+file:
+  upload:
+    dir: ./uploads
+    max-size: 10485760
+    allowed-extensions:
+      - .jpg
+      - .jpeg
+      - .png
+
 
 file:
   upload:
