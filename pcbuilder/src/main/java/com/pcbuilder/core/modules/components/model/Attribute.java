@@ -2,40 +2,24 @@ package com.pcbuilder.core.modules.components.model;
 
 
 import jakarta.persistence.*;
-import lombok.*;
-import java.util.HashSet;
-import java.util.Set;
+import lombok.Data;
 
 @Entity
-@Table(
-        name = "attributes",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"name", "value", "unit"})
-        }
-)
+@Table(name = "attributes", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"name", "value", "unit"})
+})
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Attribute {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String value;
 
-    @Column
+    @Column(length = 20)
     private String unit;
-
-    @ManyToMany(mappedBy = "attributes")
-    private Set<Component> components = new HashSet<>();
-
-    @Override
-    public String toString() {
-        return name + ": " + value + (unit != null ? " " + unit : "");
-    }
 }

@@ -10,26 +10,24 @@ import java.util.Set;
 @Entity
 @Table(name = "components")
 @Data
-@NoArgsConstructor @AllArgsConstructor
 public class Component {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
     private String name;
+
+    @Column(nullable = false, unique = true, length = 150)
+    private String slug;
 
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Column(name = "image_url")
+    @Column(length = 500)
     private String imageUrl;
 
-    @Column(nullable = false, unique = true)
-    private String slug;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
