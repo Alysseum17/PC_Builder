@@ -1,6 +1,6 @@
 package com.pcbuilder.core.modules.components.dto;
 
-import com.pcbuilder.core.modules.components.validator.ValidPriceRange;
+import com.pcbuilder.core.modules.validator.ValidPriceRange;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;

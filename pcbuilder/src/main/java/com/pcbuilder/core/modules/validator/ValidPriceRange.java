@@ -1,4 +1,4 @@
-package com.pcbuilder.core.modules.components.validator;
+package com.pcbuilder.core.modules.validator;
 
 import com.nimbusds.jose.Payload;
 import jakarta.validation.Constraint;

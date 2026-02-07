@@ -1,4 +1,4 @@
-package com.pcbuilder.core.modules.components.validator;
+package com.pcbuilder.core.modules.validator;
 
 import com.pcbuilder.core.modules.components.dto.ComponentFilterRequestDto;
 import jakarta.validation.ConstraintValidator;

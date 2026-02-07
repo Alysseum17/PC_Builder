@@ -28,6 +28,9 @@ public class Build {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(nullable = false)
+    private boolean isPrivate = false;
+
     @OneToMany(mappedBy = "build", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BuildItem> items = new ArrayList<>();
 }
