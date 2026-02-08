@@ -39,7 +39,7 @@ public class BuildValidationService {
             if(matchDirect) {
                 runCheck(c1, c2, rule.getAttr1(), rule.getAttr2(), rule.getType(), errors);
             } else if (matchReverse) {
-                runCheck(c2, c1, rule.getAttr1(), rule.getAttr2(), rule.getType(), errors);
+                runCheck(c2, c1, rule.getAttr2(), rule.getAttr1(), rule.getType(), errors);
             }
         }
     }
