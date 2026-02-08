@@ -10,6 +10,7 @@ import com.pcbuilder.core.modules.build.repository.BuildRepository;
 import com.pcbuilder.core.modules.build.specification.BuildSpecification;
 import com.pcbuilder.core.modules.components.model.Component;
 import com.pcbuilder.core.modules.components.service.ComponentProvider;
+import com.pcbuilder.core.modules.user.dto.UserSummaryDto;
 import com.pcbuilder.core.modules.user.sevice.UserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -105,7 +107,12 @@ public class BuildService {
     public Optional<BuildResponseDto> getBuild(Long buildId, UserPrincipal currentUser) {
         return buildRepository.findById(buildId)
                 .filter(build -> canView(build, currentUser))
-                .map(buildMapper::toDto);
+                .map(build -> {
+                    BuildResponseDto dto = buildMapper.toDto(build);
+                    userProvider.getUserSummary(build.getUserId())
+                            .ifPresent(userSummary -> buildMapper.enrichWithUser(dto, userSummary));
+                    return dto;
+                });
     }
 
     public List<BuildResponseDto> getUserBuilds(UserPrincipal currentUser, String targetUsername) {
@@ -117,13 +124,18 @@ public class BuildService {
             targetUserId = userProvider.getUserIdByUsername(targetUsername)
                     .orElse(-1L);
         } else {
-            if(requesterId == null) List.of();
+            if(requesterId == null) return List.of();
             targetUserId = requesterId;
         }
+        UserSummaryDto authorSummary = userProvider.getUserSummary(targetUserId).orElse(null);
 
         return buildRepository.findAllVisibleBuilds(targetUserId, requesterId)
                 .stream()
-                .map(buildMapper::toDto)
+                .map(build -> {
+                    BuildResponseDto dto = buildMapper.toDto(build);
+                    buildMapper.enrichWithUser(dto, authorSummary);
+                    return dto;
+                })
                 .toList();
     }
 
@@ -148,8 +160,20 @@ public class BuildService {
 
         spec = spec.and(visibilitySpec);
 
-        return buildRepository.findAll(spec, pageable)
-                .map(buildMapper::toDto);
+        Page<Build> buildPage = buildRepository.findAll(spec, pageable);
+
+        List<Long> userIds = buildPage.getContent().stream()
+                .map(Build::getUserId)
+                .distinct()
+                .toList();
+        Map<Long, UserSummaryDto> authorsMap = userProvider.getUsersSummaryByIds(userIds);
+        return buildPage.map(build -> {
+            BuildResponseDto dto = buildMapper.toDto(build);
+            UserSummaryDto author = authorsMap.get(build.getUserId());
+            buildMapper.enrichWithUser(dto, author);
+
+            return dto;
+        });
     }
 
     private void recalculateTotal(Build build) {
