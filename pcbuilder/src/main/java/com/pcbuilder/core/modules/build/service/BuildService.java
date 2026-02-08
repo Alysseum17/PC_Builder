@@ -1,6 +1,5 @@
 package com.pcbuilder.core.modules.build.service;
 
-import com.pcbuilder.core.modules.auth.service.UserProvider;
 import com.pcbuilder.core.modules.auth.userdetails.UserPrincipal;
 import com.pcbuilder.core.modules.build.dto.BuildFilterRequestDto;
 import com.pcbuilder.core.modules.build.dto.BuildResponseDto;
@@ -11,6 +10,7 @@ import com.pcbuilder.core.modules.build.repository.BuildRepository;
 import com.pcbuilder.core.modules.build.specification.BuildSpecification;
 import com.pcbuilder.core.modules.components.model.Component;
 import com.pcbuilder.core.modules.components.service.ComponentProvider;
+import com.pcbuilder.core.modules.user.sevice.UserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -102,12 +102,27 @@ public class BuildService {
         });
     }
 
-    public Optional<BuildResponseDto> getBuild(Long buildId) {
-        return buildRepository.findById(buildId).map(buildMapper::toDto);
+    public Optional<BuildResponseDto> getBuild(Long buildId, UserPrincipal currentUser) {
+        return buildRepository.findById(buildId)
+                .filter(build -> canView(build, currentUser))
+                .map(buildMapper::toDto);
     }
 
-    public List<BuildResponseDto> getUserBuilds(UserPrincipal user) {
-        return buildRepository.findByUserId(user.getId()).stream()
+    public List<BuildResponseDto> getUserBuilds(UserPrincipal currentUser, String targetUsername) {
+        Long requesterId = (currentUser != null) ? currentUser.getId() : null;
+
+        Long targetUserId;
+
+        if(targetUsername != null) {
+            targetUserId = userProvider.getUserIdByUsername(targetUsername)
+                    .orElse(-1L);
+        } else {
+            if(requesterId == null) List.of();
+            targetUserId = requesterId;
+        }
+
+        return buildRepository.findAllVisibleBuilds(targetUserId, requesterId)
+                .stream()
                 .map(buildMapper::toDto)
                 .toList();
     }
@@ -137,7 +152,6 @@ public class BuildService {
                 .map(buildMapper::toDto);
     }
 
-
     private void recalculateTotal(Build build) {
         BigDecimal total = build.getItems().stream()
                 .map(BuildItem::getPriceSnapshot)
@@ -148,5 +162,13 @@ public class BuildService {
     private Optional<Build> getBuildIfOwner(Long buildId, UserPrincipal user) {
         return buildRepository.findById(buildId)
                 .filter(build -> build.getUserId().equals(user.getId()));
+    }
+
+    private boolean canView(Build build, UserPrincipal user) {
+        if (!build.isPrivate()) {
+            return true;
+        }
+
+        return user != null && build.getUserId().equals(user.getId());
     }
 }

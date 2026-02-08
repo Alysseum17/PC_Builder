@@ -25,6 +25,7 @@ public class CatalogService {
     private final ComponentRepository componentRepository;
     private final AttributeRepository attributeRepository;
     private final ComponentMapper componentMapper;
+    private final CompatibilitySpecificationService compatibilitySpecificationService;
 
     public Page<ComponentResponseDto> searchComponents(ComponentFilterRequestDto filters, Pageable pageable) {
         Specification<Component> specification = Specification.where((Specification<Component>)null);
@@ -50,6 +51,13 @@ public class CatalogService {
                 );
             }
         }
+        if(filters.getCompatibleWithBuildId() != null) {
+            specification = specification.and(
+                    compatibilitySpecificationService
+                            .createCompatibilitySpec(filters.getCompatibleWithBuildId(), filters.getCategory())
+            );
+        }
+
         Page<Component> componentsPage = componentRepository.findAll(specification, pageable);
         return componentsPage.map(componentMapper::toDto);
     }

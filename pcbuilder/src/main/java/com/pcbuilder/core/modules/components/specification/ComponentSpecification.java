@@ -51,4 +51,52 @@ public class ComponentSpecification {
             );
         };
     }
+    public static Specification<Component> attributeLte(String attributeName, String maxValue) {
+        return (root, query, criteriaBuilder) -> {
+            if (attributeName == null || maxValue == null || attributeName.isEmpty() || maxValue.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+
+            Join<Component, Attribute> attributeJoin = root.join("attributes");
+            query.distinct(true);
+
+            try {
+                int maxInt = Integer.parseInt(maxValue);
+
+                return criteriaBuilder.and(
+                        criteriaBuilder.equal(attributeJoin.get("name"), attributeName),
+                        criteriaBuilder.lessThanOrEqualTo(
+                                attributeJoin.get("value").as(Integer.class),
+                                maxInt
+                        )
+                );
+            } catch (NumberFormatException e) {
+                return criteriaBuilder.conjunction();
+            }
+        };
+    }
+
+    public static Specification<Component> attributeGte(String attributeName, String minValue) {
+        return (root, query, criteriaBuilder) -> {
+            if (attributeName == null || minValue == null || attributeName.isEmpty() || minValue.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+
+            Join<Component, Attribute> attributeJoin = root.join("attributes");
+
+            try {
+                int minInt = Integer.parseInt(minValue);
+
+                return criteriaBuilder.and(
+                        criteriaBuilder.equal(attributeJoin.get("name"), attributeName),
+                        criteriaBuilder.greaterThanOrEqualTo(
+                                attributeJoin.get("value").as(Integer.class),
+                                minInt
+                        )
+                );
+            } catch (NumberFormatException e) {
+                return criteriaBuilder.conjunction();
+            }
+        };
+    }
 }

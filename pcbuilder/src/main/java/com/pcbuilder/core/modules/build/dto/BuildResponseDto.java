@@ -11,4 +11,7 @@ public class BuildResponseDto {
     private String name;
     private BigDecimal totalPrice;
     private List<BuildItemDto> items;
+
+    private String authorUsername;
+    private String authorAvatarFileName;
 }

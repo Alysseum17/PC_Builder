@@ -35,6 +35,7 @@ public class BuildSpecification {
         };
     }
 
+
     public static Specification<Build> isPublic() {
         return (root, query, cb) -> cb.isFalse(root.get("isPrivate"));
     }

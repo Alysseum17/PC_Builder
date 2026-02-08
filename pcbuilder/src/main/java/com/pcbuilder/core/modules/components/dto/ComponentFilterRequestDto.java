@@ -26,4 +26,6 @@ public class ComponentFilterRequestDto {
     private String searchQuery;
 
     private Map<String, String> attributes;
+
+    private Long compatibleWithBuildId;
 }
