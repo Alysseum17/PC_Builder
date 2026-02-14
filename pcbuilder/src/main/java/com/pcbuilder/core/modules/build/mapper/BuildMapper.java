@@ -5,7 +5,6 @@ import com.pcbuilder.core.modules.build.dto.BuildResponseDto;
 import com.pcbuilder.core.modules.build.model.Build;
 import com.pcbuilder.core.modules.build.model.BuildItem;
 import com.pcbuilder.core.modules.components.service.ComponentProvider;
-import com.pcbuilder.core.modules.user.dto.UserSummaryDto;
 import com.pcbuilder.core.modules.user.sevice.UserProvider;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
@@ -22,8 +21,8 @@ public abstract class BuildMapper {
     @Autowired
     protected UserProvider userProvider;
 
-    @Mapping(target = "authorName", ignore = true)
-    @Mapping(target = "authorAvatar", ignore = true)
+    @Mapping(target = "authorUsername", source = "user.username")
+    @Mapping(target = "authorAvatarFileName", source = "user.avatarFileName")
     public abstract BuildResponseDto toDto(Build build);
 
     @Mapping(target = "price", source = "priceSnapshot")
@@ -45,16 +44,4 @@ public abstract class BuildMapper {
             dto.setComponentName("Unknown Component");
         }
     }
-
-
-    public void enrichWithUser(BuildResponseDto dto, UserSummaryDto user) {
-        if (user != null) {
-            dto.setAuthorUsername(user.getUsername());
-            dto.setAuthorAvatarFileName(user.getAvatarFileName());
-        } else {
-            dto.setAuthorUsername("Deleted User");
-            dto.setAuthorAvatarFileName(null);
-        }
-    }
-
 }

@@ -31,7 +31,7 @@ public class BuildSpecification {
     public static Specification<Build> hasUserId(Long userId) {
         return (root, query, cb) -> {
             if (userId == null) return cb.conjunction();
-            return cb.equal(root.get("userId"), userId);
+            return cb.equal(root.get("user").get("id"), userId);
         };
     }
 
@@ -43,7 +43,7 @@ public class BuildSpecification {
     public static Specification<Build> isOwner(Long currentUserId) {
         return (root, query, cb) -> {
             if (currentUserId == null) return cb.disjunction();
-            return cb.equal(root.get("userId"), currentUserId);
+            return cb.equal(root.get("user").get("id"), currentUserId);
         };
     }
 

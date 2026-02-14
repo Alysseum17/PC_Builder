@@ -60,7 +60,7 @@ public class SecurityConfig {
                                 .baseUri("/oauth2/callback/*")
                         )
                         .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService) // Використовуємо наш кастомний сервіс
+                                .userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)

@@ -1,5 +1,6 @@
 package com.pcbuilder.core.modules.build.model;
 
+import com.pcbuilder.core.modules.user.model.UserEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -19,8 +20,9 @@ public class Build {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @Column(nullable = false)
     private BigDecimal totalPrice = BigDecimal.ZERO;

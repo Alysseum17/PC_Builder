@@ -10,7 +10,8 @@ import com.pcbuilder.core.modules.build.repository.BuildRepository;
 import com.pcbuilder.core.modules.build.specification.BuildSpecification;
 import com.pcbuilder.core.modules.components.model.Component;
 import com.pcbuilder.core.modules.components.service.ComponentProvider;
-import com.pcbuilder.core.modules.user.dto.UserSummaryDto;
+import com.pcbuilder.core.modules.user.model.UserEntity;
+import com.pcbuilder.core.modules.user.repository.UserRepository;
 import com.pcbuilder.core.modules.user.sevice.UserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -31,14 +31,16 @@ public class BuildService {
     private final BuildRepository buildRepository;
     private final BuildValidationService buildValidationService;
     private final ComponentProvider componentProvider;
-    private final UserProvider userProvider;
     private final BuildMapper buildMapper;
+    private final UserRepository userRepository;
+    private final UserProvider userProvider;
 
     @Transactional
-    public BuildResponseDto createBuild(String name, boolean isPrivate, UserPrincipal user) {
+    public BuildResponseDto createBuild(String name, boolean isPrivate, UserPrincipal userPrincipal) {
+        UserEntity user = userRepository.getReferenceById(userPrincipal.getId());
         Build build = new Build();
         build.setName(name);
-        build.setUserId(user.getId());
+        build.setUser(user);
         build.setPrivate(isPrivate);
         return buildMapper.toDto(buildRepository.save(build));
     }
@@ -107,12 +109,7 @@ public class BuildService {
     public Optional<BuildResponseDto> getBuild(Long buildId, UserPrincipal currentUser) {
         return buildRepository.findById(buildId)
                 .filter(build -> canView(build, currentUser))
-                .map(build -> {
-                    BuildResponseDto dto = buildMapper.toDto(build);
-                    userProvider.getUserSummary(build.getUserId())
-                            .ifPresent(userSummary -> buildMapper.enrichWithUser(dto, userSummary));
-                    return dto;
-                });
+                .map(buildMapper::toDto);
     }
 
     public List<BuildResponseDto> getUserBuilds(UserPrincipal currentUser, String targetUsername) {
@@ -127,15 +124,10 @@ public class BuildService {
             if(requesterId == null) return List.of();
             targetUserId = requesterId;
         }
-        UserSummaryDto authorSummary = userProvider.getUserSummary(targetUserId).orElse(null);
 
         return buildRepository.findAllVisibleBuilds(targetUserId, requesterId)
                 .stream()
-                .map(build -> {
-                    BuildResponseDto dto = buildMapper.toDto(build);
-                    buildMapper.enrichWithUser(dto, authorSummary);
-                    return dto;
-                })
+                .map(buildMapper::toDto)
                 .toList();
     }
 
@@ -160,20 +152,8 @@ public class BuildService {
 
         spec = spec.and(visibilitySpec);
 
-        Page<Build> buildPage = buildRepository.findAll(spec, pageable);
+        return buildRepository.findAll(spec, pageable).map(buildMapper::toDto);
 
-        List<Long> userIds = buildPage.getContent().stream()
-                .map(Build::getUserId)
-                .distinct()
-                .toList();
-        Map<Long, UserSummaryDto> authorsMap = userProvider.getUsersSummaryByIds(userIds);
-        return buildPage.map(build -> {
-            BuildResponseDto dto = buildMapper.toDto(build);
-            UserSummaryDto author = authorsMap.get(build.getUserId());
-            buildMapper.enrichWithUser(dto, author);
-
-            return dto;
-        });
     }
 
     private void recalculateTotal(Build build) {
@@ -185,7 +165,7 @@ public class BuildService {
 
     private Optional<Build> getBuildIfOwner(Long buildId, UserPrincipal user) {
         return buildRepository.findById(buildId)
-                .filter(build -> build.getUserId().equals(user.getId()));
+                .filter(build -> build.getUser().getId().equals(user.getId()));
     }
 
     private boolean canView(Build build, UserPrincipal user) {
@@ -193,6 +173,6 @@ public class BuildService {
             return true;
         }
 
-        return user != null && build.getUserId().equals(user.getId());
+        return user != null && build.getUser().getId().equals(user.getId());
     }
 }
