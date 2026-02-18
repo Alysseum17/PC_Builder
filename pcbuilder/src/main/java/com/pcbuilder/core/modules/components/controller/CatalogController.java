@@ -1,5 +1,6 @@
 package com.pcbuilder.core.modules.components.controller;
 
+import com.pcbuilder.core.modules.components.dto.AttributeValueDto;
 import com.pcbuilder.core.modules.components.dto.ComponentFilterRequestDto;
 import com.pcbuilder.core.modules.components.dto.ComponentResponseDto;
 import com.pcbuilder.core.modules.components.service.CatalogService;
@@ -29,7 +30,7 @@ public class CatalogController {
     }
 
     @GetMapping("/filters/{categorySlug}")
-    public ResponseEntity<Map<String, List<String>>> getFilters(@PathVariable String categorySlug) {
+    public ResponseEntity<Map<String, List<AttributeValueDto>>> getFilters(@PathVariable String categorySlug) {
         return ResponseEntity.ok(catalogService.getAttributesByCategory(categorySlug));
     }
 

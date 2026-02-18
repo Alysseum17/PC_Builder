@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
-        Map<String, String> errors = new HashMap<>();
+        Map<String, Object> errors = new HashMap<>();
 
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -198,6 +198,25 @@ public class GlobalExceptionHandler {
 
     }
 
+    @ExceptionHandler(BuildCompatibilityException.class)
+    public ResponseEntity<ErrorResponse> handleBuildCompatibilityException(
+            BuildCompatibilityException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .error("Compatibility Error")
+                .message("Build compatibility validation failed")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .details(Map.of("compatibilityErrors", ex.getErrors()))
+                .build();
+
+        log.warn("Build compatibility error: {}", ex.getErrors());
+
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorResponse);
+
+    }
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFound(
             EntityNotFoundException ex,

@@ -12,7 +12,7 @@ import com.pcbuilder.core.modules.components.model.Component;
 import com.pcbuilder.core.modules.components.service.ComponentProvider;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.repository.UserRepository;
-import com.pcbuilder.core.modules.user.sevice.UserProvider;
+import com.pcbuilder.core.modules.user.service.UserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -56,7 +56,7 @@ public class BuildService {
 
             BuildItem item = new BuildItem();
             item.setBuild(build);
-            item.setComponentId(componentId);
+            item.setComponent(component);
             item.setPriceSnapshot(component.getPrice());
 
             build.getItems().add(item);
@@ -98,7 +98,7 @@ public class BuildService {
                     .orElseThrow(() -> new IllegalArgumentException("Old component not found"));
 
             Component newComponent = componentProvider.getComponentById(newComponentId);
-            item.setComponentId(newComponentId);
+            item.setComponent(newComponent);
             item.setPriceSnapshot(newComponent.getPrice());
 
             recalculateTotal(build);

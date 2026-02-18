@@ -14,12 +14,16 @@ import java.util.Optional;
 public interface AttributeRepository extends JpaRepository<Attribute, Long> {
 
     @Query("""
-        SELECT DISTINCT attr.name as name, attr.value as value 
-        FROM Component c 
-        JOIN c.attributes attr 
-        JOIN c.category cat 
-        WHERE cat.slug = :categorySlug 
-        ORDER BY attr.name, attr.value
+    SELECT 
+        attr.name as name, 
+        attr.value as value, 
+        COUNT(c.id) as count 
+    FROM Component c 
+    JOIN c.attributes attr 
+    JOIN c.category cat 
+    WHERE cat.slug = :categorySlug 
+    GROUP BY attr.name, attr.value
+    ORDER BY attr.name, attr.value
 """)
     List<FilterOptionProjection> findDistinctComponentCategory(@Param("categorySlug") String categorySlug);
 

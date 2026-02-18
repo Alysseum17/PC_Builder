@@ -4,7 +4,6 @@ import com.pcbuilder.core.modules.exception.EmailSendException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -22,31 +21,6 @@ public class MailService {
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
-    public void sendTestEmail(String to) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("Test Email from PCBuilder");
-        message.setText("This is a test email sent from the PCBuilder application.");
-        mailSender.send(message);
-    }
-
-    public void sendResetPasswordEmail(String to, String resetLink) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("Password Reset Request");
-        message.setText("To reset your password, click the following link: " + resetLink +
-                        "\nThis link will expire in 24 hours.");
-        mailSender.send(message);
-    }
-
-    public void sendEmailVerificationEmail(String to, String verificationLink) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("Email Verification");
-        message.setText("To verify your email address, click the following link: " + verificationLink +
-                        "\nThis link will expire in 60 minutes.");
-        mailSender.send(message);
-    }
     public void sendHtmlEmail(String to, String subject, String templateName,
                               Map<String, Object> variables) {
         try {

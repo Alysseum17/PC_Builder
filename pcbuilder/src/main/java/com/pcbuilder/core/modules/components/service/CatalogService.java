@@ -1,5 +1,6 @@
 package com.pcbuilder.core.modules.components.service;
 
+import com.pcbuilder.core.modules.components.dto.AttributeValueDto;
 import com.pcbuilder.core.modules.components.dto.ComponentFilterRequestDto;
 import com.pcbuilder.core.modules.components.dto.ComponentResponseDto;
 import com.pcbuilder.core.modules.components.mapper.ComponentMapper;
@@ -62,13 +63,16 @@ public class CatalogService {
         return componentsPage.map(componentMapper::toDto);
     }
 
-    public Map<String, List<String>> getAttributesByCategory(String categorySlug) {
+    public Map<String, List<AttributeValueDto>> getAttributesByCategory(String categorySlug) {
         List<FilterOptionProjection> attributes = attributeRepository.findDistinctComponentCategory(categorySlug);
 
         return attributes.stream()
                 .collect(Collectors.groupingBy(
                         FilterOptionProjection::getName,
-                        Collectors.mapping(FilterOptionProjection::getValue, Collectors.toList())
+                        Collectors.mapping(
+                                item -> new AttributeValueDto(item.getValue(), item.getCount()),
+                                Collectors.toList()
+                        )
                 ));
     }
 

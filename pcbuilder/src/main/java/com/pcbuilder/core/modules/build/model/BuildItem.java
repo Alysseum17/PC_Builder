@@ -1,5 +1,6 @@
 package com.pcbuilder.core.modules.build.model;
 
+import com.pcbuilder.core.modules.components.model.Component;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -17,9 +18,14 @@ public class BuildItem {
     @JoinColumn(name = "build_id", nullable = false)
     private Build build;
 
-    @Column(nullable = false)
-    private Long componentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "component_id", nullable = false)
+    private Component component;
 
     @Column(nullable = false)
     private BigDecimal priceSnapshot;
+
+    public Long getComponentId() {
+        return component != null ? component.getId() : null;
+    }
 }

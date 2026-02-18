@@ -1,7 +1,7 @@
 package com.pcbuilder.core.modules.user.controller;
 
 import com.pcbuilder.core.modules.auth.dto.MessageResponse;
-import com.pcbuilder.core.modules.user.sevice.AvatarService;
+import com.pcbuilder.core.modules.user.service.AvatarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;

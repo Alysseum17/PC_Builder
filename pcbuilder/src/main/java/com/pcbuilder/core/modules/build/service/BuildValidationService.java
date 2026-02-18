@@ -4,6 +4,7 @@ import com.pcbuilder.core.modules.build.model.CompatibilityRule;
 import com.pcbuilder.core.modules.components.model.Attribute;
 import com.pcbuilder.core.modules.components.model.Component;
 import com.pcbuilder.core.modules.components.service.ComponentProvider;
+import com.pcbuilder.core.modules.exception.BuildCompatibilityException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,7 @@ public class BuildValidationService {
             checkCompatibility(newComp, current, errors);
         }
         if(!errors.isEmpty()) {
-            throw new IllegalArgumentException("Compatibility issues found:\n" + String.join("\n", errors));
+            throw new BuildCompatibilityException(errors);
         }
     }
 

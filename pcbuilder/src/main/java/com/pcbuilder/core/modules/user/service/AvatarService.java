@@ -1,4 +1,4 @@
-package com.pcbuilder.core.modules.user.sevice;
+package com.pcbuilder.core.modules.user.service;
 
 import com.pcbuilder.core.modules.auth.dto.MessageResponse;
 import com.pcbuilder.core.modules.user.model.UserEntity;

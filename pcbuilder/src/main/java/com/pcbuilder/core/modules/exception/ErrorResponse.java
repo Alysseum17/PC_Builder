@@ -22,6 +22,6 @@ public class ErrorResponse {
 
     private LocalDateTime timestamp;
 
-    private Map<String, String> details;
+    private Map<String, Object> details;
 
 }

@@ -1,4 +1,4 @@
-package com.pcbuilder.core.modules.user.sevice;
+package com.pcbuilder.core.modules.user.service;
 
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.repository.UserRepository;

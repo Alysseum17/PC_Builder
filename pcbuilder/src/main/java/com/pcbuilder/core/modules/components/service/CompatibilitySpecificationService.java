@@ -32,9 +32,9 @@ public class CompatibilitySpecificationService {
 
         if (build.getItems().isEmpty()) return spec;
 
-        List<Long> currentIds = build.getItems().stream()
-                .map(BuildItem::getComponentId).toList();
-        List<Component> currentComponents = componentRepository.findAllById(currentIds);
+        List<Component> currentComponents = build.getItems().stream()
+                .map(BuildItem::getComponent)
+                .toList();
 
         for (CompatibilityRule rule : CompatibilityRule.values()) {
 

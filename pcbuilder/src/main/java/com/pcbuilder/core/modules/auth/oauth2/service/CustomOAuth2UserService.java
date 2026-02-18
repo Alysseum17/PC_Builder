@@ -6,7 +6,7 @@ import com.pcbuilder.core.modules.auth.userdetails.UserPrincipal;
 import com.pcbuilder.core.modules.user.model.AuthProvider;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.repository.UserRepository;
-import com.pcbuilder.core.modules.user.sevice.AvatarService;
+import com.pcbuilder.core.modules.user.service.AvatarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
