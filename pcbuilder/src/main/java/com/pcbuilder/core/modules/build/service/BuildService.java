@@ -10,6 +10,7 @@ import com.pcbuilder.core.modules.build.repository.BuildRepository;
 import com.pcbuilder.core.modules.build.specification.BuildSpecification;
 import com.pcbuilder.core.modules.components.model.Component;
 import com.pcbuilder.core.modules.components.service.ComponentProvider;
+import com.pcbuilder.core.modules.social.service.SocialStatsService;
 import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.repository.UserRepository;
 import com.pcbuilder.core.modules.user.service.UserProvider;
@@ -34,6 +35,7 @@ public class BuildService {
     private final BuildMapper buildMapper;
     private final UserRepository userRepository;
     private final UserProvider userProvider;
+    private final SocialStatsService socialStatsService;
 
     @Transactional
     public BuildResponseDto createBuild(String name, boolean isPrivate, UserPrincipal userPrincipal) {
@@ -42,7 +44,9 @@ public class BuildService {
         build.setName(name);
         build.setUser(user);
         build.setPrivate(isPrivate);
-        return buildMapper.toDto(buildRepository.save(build));
+        BuildResponseDto dto = buildMapper.toDto(buildRepository.save(build));
+        socialStatsService.enrichOne(dto, userPrincipal.getId());
+        return dto;
     }
 
     @Transactional
@@ -62,7 +66,9 @@ public class BuildService {
             build.getItems().add(item);
 
             recalculateTotal(build);
-            return buildMapper.toDto(buildRepository.save(build));
+            BuildResponseDto dto = buildMapper.toDto(buildRepository.save(build));
+            socialStatsService.enrichOne(dto, user.getId());
+            return dto;
         });
     }
 
@@ -78,7 +84,9 @@ public class BuildService {
                 recalculateTotal(build);
             });
 
-            return buildMapper.toDto(buildRepository.save(build));
+            BuildResponseDto dto = buildMapper.toDto(buildRepository.save(build));
+            socialStatsService.enrichOne(dto, user.getId());
+            return dto;
         });
     }
 
@@ -102,33 +110,45 @@ public class BuildService {
             item.setPriceSnapshot(newComponent.getPrice());
 
             recalculateTotal(build);
-            return buildMapper.toDto(buildRepository.save(build));
+            BuildResponseDto dto = buildMapper.toDto(buildRepository.save(build));
+            socialStatsService.enrichOne(dto, user.getId());
+            return dto;
         });
     }
 
+    @Transactional(readOnly = true)
     public Optional<BuildResponseDto> getBuild(Long buildId, UserPrincipal currentUser) {
         return buildRepository.findById(buildId)
                 .filter(build -> canView(build, currentUser))
-                .map(buildMapper::toDto);
+                .map(build -> {
+                    BuildResponseDto dto = buildMapper.toDto(build);
+                    Long userId = currentUser != null ? currentUser.getId() : null;
+                    socialStatsService.enrichOne(dto, userId);
+                    return dto;
+                });
     }
 
+    @Transactional(readOnly = true)
     public List<BuildResponseDto> getUserBuilds(UserPrincipal currentUser, String targetUsername) {
         Long requesterId = (currentUser != null) ? currentUser.getId() : null;
 
         Long targetUserId;
 
-        if(targetUsername != null) {
+        if (targetUsername != null) {
             targetUserId = userProvider.getUserIdByUsername(targetUsername)
                     .orElse(-1L);
         } else {
-            if(requesterId == null) return List.of();
+            if (requesterId == null) return List.of();
             targetUserId = requesterId;
         }
 
-        return buildRepository.findAllVisibleBuilds(targetUserId, requesterId)
+        List<BuildResponseDto> dtos = buildRepository.findAllVisibleBuilds(targetUserId, requesterId)
                 .stream()
                 .map(buildMapper::toDto)
                 .toList();
+
+        socialStatsService.enrichList(dtos, requesterId);
+        return dtos;
     }
 
     @Transactional(readOnly = true)
@@ -152,7 +172,11 @@ public class BuildService {
 
         spec = spec.and(visibilitySpec);
 
-        return buildRepository.findAll(spec, pageable).map(buildMapper::toDto);
+        Page<BuildResponseDto> page = buildRepository.findAll(spec, pageable).map(buildMapper::toDto);
+
+        socialStatsService.enrichList(page.getContent(), currentUserId);
+
+        return page;
 
     }
 

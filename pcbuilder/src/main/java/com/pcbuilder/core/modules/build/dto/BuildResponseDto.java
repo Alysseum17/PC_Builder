@@ -14,4 +14,9 @@ public class BuildResponseDto {
 
     private String authorUsername;
     private String authorAvatarFileName;
+
+    private long likeCount;
+    private long commentCount;
+    private boolean likedByCurrentUser;
+    private boolean bookmarkedByCurrentUser;
 }
