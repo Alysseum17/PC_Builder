@@ -41,8 +41,9 @@ public class SocialController {
             @RequestBody @Valid CreateCommentRequest request,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(commentService.createComment(buildId, request, user));
+        return commentService.createComment(buildId, request, user)
+                .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/builds/{buildId}/comments")
@@ -50,7 +51,9 @@ public class SocialController {
             @PathVariable Long buildId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ResponseEntity.ok(commentService.getCommentsByBuild(buildId, pageable));
+        return commentService.getCommentsByBuild(buildId, pageable)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/comments/{commentId}")
@@ -59,7 +62,9 @@ public class SocialController {
             @PathVariable Long commentId,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        return ResponseEntity.ok(commentService.deleteComment(commentId, user));
+        return commentService.deleteComment(commentId, user)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 
@@ -69,7 +74,9 @@ public class SocialController {
             @PathVariable Long buildId,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        return ResponseEntity.ok(likeService.toggleLike(buildId, user));
+        return likeService.toggleLike(buildId, user)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/builds/{buildId}/likes")
@@ -77,7 +84,9 @@ public class SocialController {
             @PathVariable Long buildId,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        return ResponseEntity.ok(likeService.getLikeStatus(buildId, user));
+        return likeService.getLikeStatus(buildId, user)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 
@@ -87,7 +96,9 @@ public class SocialController {
             @PathVariable Long buildId,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        return ResponseEntity.ok(bookmarkService.toggleBookmark(buildId, user));
+        return bookmarkService.toggleBookmark(buildId, user)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/builds/{buildId}/bookmarks")
@@ -96,7 +107,9 @@ public class SocialController {
             @PathVariable Long buildId,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        return ResponseEntity.ok(bookmarkService.getBookmarkStatus(buildId, user));
+        return bookmarkService.getBookmarkStatus(buildId, user)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/bookmarks")

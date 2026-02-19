@@ -3,16 +3,12 @@ package com.pcbuilder.core.modules.social.service;
 import com.pcbuilder.core.modules.auth.userdetails.UserPrincipal;
 import com.pcbuilder.core.modules.build.dto.BuildResponseDto;
 import com.pcbuilder.core.modules.build.mapper.BuildMapper;
-import com.pcbuilder.core.modules.build.model.Build;
 import com.pcbuilder.core.modules.build.service.BuildProvider;
 import com.pcbuilder.core.modules.social.dto.BookmarkResponseDto;
 import com.pcbuilder.core.modules.social.model.Bookmark;
 import com.pcbuilder.core.modules.social.repository.BookmarkRepository;
-import com.pcbuilder.core.modules.user.model.UserEntity;
 import com.pcbuilder.core.modules.user.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,31 +26,25 @@ public class BookmarkService {
     private final SocialStatsService socialStatsService;
 
     @Transactional
-    public BookmarkResponseDto toggleBookmark(Long buildId, UserPrincipal userPrincipal) {
-        Build build = buildProvider.getBuildById(buildId)
-                .orElseThrow(() -> new EntityNotFoundException("Build not found: " + buildId));
+    public Optional<BookmarkResponseDto> toggleBookmark(Long buildId, UserPrincipal userPrincipal) {
+        return buildProvider.getBuildById(buildId)
+                .filter(build -> !build.isPrivate() || build.getUser().getId().equals(userPrincipal.getId()))
+                .map(build -> {
+                    Optional<Bookmark> existingBookmark = bookmarkRepository.findByUserIdAndBuildId(
+                            userPrincipal.getId(), buildId
+                    );
 
-        if (build.isPrivate() && !build.getUser().getId().equals(userPrincipal.getId())) {
-            throw new AccessDeniedException("Cannot bookmark a private build");
-        }
-
-        Optional<Bookmark> existingBookmark = bookmarkRepository.findByUserIdAndBuildId(
-                userPrincipal.getId(), buildId
-        );
-
-        if (existingBookmark.isPresent()) {
-            bookmarkRepository.delete(existingBookmark.get());
-            return new BookmarkResponseDto(buildId, false);
-        } else {
-            UserEntity user = userRepository.getReferenceById(userPrincipal.getId());
-
-            Bookmark bookmark = new Bookmark();
-            bookmark.setUser(user);
-            bookmark.setBuild(build);
-            bookmarkRepository.save(bookmark);
-
-            return new BookmarkResponseDto(buildId, true);
-        }
+                    if (existingBookmark.isPresent()) {
+                        bookmarkRepository.delete(existingBookmark.get());
+                        return new BookmarkResponseDto(buildId, false);
+                    } else {
+                        Bookmark bookmark = new Bookmark();
+                        bookmark.setUser(userRepository.getReferenceById(userPrincipal.getId()));
+                        bookmark.setBuild(build);
+                        bookmarkRepository.save(bookmark);
+                        return new BookmarkResponseDto(buildId, true);
+                    }
+                });
     }
 
     @Transactional(readOnly = true)
@@ -70,14 +60,13 @@ public class BookmarkService {
     }
 
     @Transactional(readOnly = true)
-    public BookmarkResponseDto getBookmarkStatus(Long buildId, UserPrincipal userPrincipal) {
-        if (buildProvider.getBuildById(buildId).isEmpty()) {
-            throw new EntityNotFoundException("Build not found: " + buildId);
-        }
-
-        boolean bookmarked = userPrincipal != null
-                && bookmarkRepository.existsByUserIdAndBuildId(userPrincipal.getId(), buildId);
-
-        return new BookmarkResponseDto(buildId, bookmarked);
+    public Optional<BookmarkResponseDto> getBookmarkStatus(Long buildId, UserPrincipal userPrincipal) {
+        return buildProvider.getBuildById(buildId)
+                .map(build -> {
+                    boolean bookmarked = bookmarkRepository.existsByUserIdAndBuildId(
+                            userPrincipal.getId(), buildId
+                    );
+                    return new BookmarkResponseDto(buildId, bookmarked);
+                });
     }
 }
